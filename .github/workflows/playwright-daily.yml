@@ -7,7 +7,7 @@ on:
     branches: [ main ]
   
   schedule:
-    - cron: '0 15 * * *'
+    - cron: '0 8 * * *'     # 15:00 WIB
 
 jobs:
   test:
@@ -36,19 +36,6 @@ jobs:
       - name: Run Playwright Tests
         run: npx playwright test
 
-      # === ZIP REPORT SEBELUM DIKIRIM ===
-      - name: Zip Playwright Report
-        if: always()
-        run: |
-          if [ -d "playwright-report" ]; then
-            zip -r playwright-report.zip playwright-report/
-          else
-            echo "No report folder found"
-            mkdir -p playwright-report
-            echo "Test completed but no report generated" > playwright-report/index.html
-            zip -r playwright-report.zip playwright-report/
-          fi
-
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
         if: always()
@@ -57,7 +44,7 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-      # === KIRIM EMAIL DENGAN ATTACHMENT ===
+      # === KIRIM EMAIL DENGAN LINK ===
       - name: Send Email Report
         if: always()
         uses: dawidd6/action-send-mail@v3
@@ -75,7 +62,10 @@ jobs:
             **Status**: ${{ job.status }}
             **Repository**: ${{ github.repository }}
             **Waktu**: ${{ github.event.schedule || 'Manual Trigger' }}
-            
-            Report lengkap ada di attachment.
-          attachments: playwright-report.zip
+            **Commit**: ${{ github.sha }}
+
+            📊 **Download Report Lengkap:**
+            ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            Report akan tersedia selama 7 hari.
           convert_markdown: true
